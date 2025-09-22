@@ -209,3 +209,6 @@ __marimo__/
 
 reasoning/Qwen2-0.5B-GRPO-test
 reasoning/wandb
+finetune/wandb
+finetune/gpt-oss-20b-medical-qa
+finetune/roberta-base-ag_news
