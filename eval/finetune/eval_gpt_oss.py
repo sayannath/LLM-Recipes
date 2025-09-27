@@ -5,11 +5,11 @@ from peft import PeftModel
 tokenizer = AutoTokenizer.from_pretrained("openai/gpt-oss-20b")
 
 # Load the original model first
-model_kwargs = dict(attn_implementation="eager", torch_dtype="auto", use_cache=True, device_map="auto")
+model_kwargs = dict(attn_implementation="eager", dtype="auto", use_cache=True, device_map="auto")
 base_model = AutoModelForCausalLM.from_pretrained("openai/gpt-oss-20b", **model_kwargs).cuda()
 
 # Merge fine-tuned weights with the base model
-peft_model_id = "gpt-oss-20b-medical-qa"
+peft_model_id = "../../finetune/gpt-oss-20b-medical-qa"
 model = PeftModel.from_pretrained(base_model, peft_model_id)
 model = model.merge_and_unload()
 

@@ -14,10 +14,10 @@ from transformers import (
 wandb.init(
     project="LLM-Recipe",
     entity="sayannath235",
-    name="Roberta:base-AgNews",
+    name="Roberta:base-AgNews-1",
 )
 
-model_id = "FacebookAI/roberta-base"
+model_id = "roberta-base"
 dataset_id = "ag_news"
 repository_id = "roberta-base-ag_news"
 
@@ -42,6 +42,12 @@ def tokenize(batch):
 train_dataset = train_dataset.map(tokenize, batched=True, batch_size=len(train_dataset))
 val_dataset = val_dataset.map(tokenize, batched=True, batch_size=len(val_dataset))
 test_dataset = test_dataset.map(tokenize, batched=True, batch_size=len(test_dataset))
+
+
+print(train_dataset)
+
+
+# exit()
 
 # Set dataset format
 train_dataset.set_format("torch", columns=["input_ids", "attention_mask", "label"])
@@ -68,13 +74,13 @@ model = RobertaForSequenceClassification.from_pretrained(model_id, config=config
 training_args = TrainingArguments(
     output_dir=repository_id,
     num_train_epochs=5,
-    per_device_train_batch_size=8,
-    per_device_eval_batch_size=8,
+    per_device_train_batch_size=32,
+    per_device_eval_batch_size=32,
     eval_strategy="epoch",         
     logging_dir=f"{repository_id}/logs",
     logging_strategy="steps",
     logging_steps=10,
-    learning_rate=5e-5,
+    learning_rate=1e-5,
     weight_decay=0.01,
     warmup_steps=500,
     save_strategy="epoch",

@@ -212,3 +212,4 @@ reasoning/wandb
 finetune/wandb
 finetune/gpt-oss-20b-medical-qa
 finetune/roberta-base-ag_news
+wandb/

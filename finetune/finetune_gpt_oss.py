@@ -13,11 +13,11 @@ from openai_harmony import (
 )
 
 # Initialize wandb
-wandb.init(
-    project="LLM-Recipe",
-    entity="sayannath235",
-    name="GPT-OSS:20B-MedicalDataset",
-)
+# wandb.init(
+#     project="LLM-Recipe",
+#     entity="sayannath235",
+#     name="GPT-OSS:20B-MedicalDataset",
+# )
 
 quantization_config = Mxfp4Config(dequantize=True)
 model_kwargs = dict(
@@ -60,7 +60,7 @@ def prompt_style_harmony(examples):
 
 dataset = load_dataset(
     "FreedomIntelligence/medical-o1-verifiable-problem",
-    split="train[0:1000]"
+    split="train"
 )
 dataset = dataset.map(prompt_style_harmony, batched=True)
 
