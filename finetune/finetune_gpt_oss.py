@@ -7,9 +7,14 @@ from peft import LoraConfig, get_peft_model
 from trl import SFTConfig, SFTTrainer
 
 from openai_harmony import (
-    load_harmony_encoding, HarmonyEncodingName,
-    Conversation, Message, Role,
-    SystemContent, DeveloperContent, ReasoningEffort
+    load_harmony_encoding,
+    HarmonyEncodingName,
+    Conversation,
+    Message,
+    Role,
+    SystemContent,
+    DeveloperContent,
+    ReasoningEffort,
 )
 
 # Initialize wandb
@@ -19,7 +24,7 @@ from openai_harmony import (
 #     name="GPT-OSS:20B-MedicalDataset",
 # )
 
-quantization_config = Mxfp4Config(dequantize=True)
+quantization_config = Mxfp4Config(dequantize=False)
 model_kwargs = dict(
     attn_implementation="eager",
     dtype=torch.bfloat16,
@@ -33,21 +38,25 @@ tokenizer = AutoTokenizer.from_pretrained("openai/gpt-oss-20b")
 
 enc = load_harmony_encoding(HarmonyEncodingName.HARMONY_GPT_OSS)
 
+
 def render_pair_harmony(question, answer):
-    convo = Conversation.from_messages([
-        Message.from_role_and_content(
-            Role.DEVELOPER,
-            DeveloperContent.new().with_instructions(
-                "You are a medical expert with advanced knowledge in clinical reasoning and diagnostics. "
-                "Respond with ONLY the final diagnosis/cause in ≤5 words."
-            )
-        ),
-        Message.from_role_and_content(Role.USER, question.strip()),
-        Message.from_role_and_content(Role.ASSISTANT, answer.strip()),
-    ])
+    convo = Conversation.from_messages(
+        [
+            Message.from_role_and_content(
+                Role.DEVELOPER,
+                DeveloperContent.new().with_instructions(
+                    "You are a medical expert with advanced knowledge in clinical reasoning and diagnostics. "
+                    "Respond with ONLY the final diagnosis/cause in ≤5 words."
+                ),
+            ),
+            Message.from_role_and_content(Role.USER, question.strip()),
+            Message.from_role_and_content(Role.ASSISTANT, answer.strip()),
+        ]
+    )
     tokens = enc.render_conversation(convo)
     text = enc.decode(tokens)
     return text
+
 
 def prompt_style_harmony(examples):
     qs = examples["Open-ended Verifiable Question"]
@@ -58,47 +67,50 @@ def prompt_style_harmony(examples):
         outputs["text"].append(rendered)
     return outputs
 
+
 dataset = load_dataset(
-    "FreedomIntelligence/medical-o1-verifiable-problem",
-    split="train"
+    "FreedomIntelligence/medical-o1-verifiable-problem", split="train"
 )
 dataset = dataset.map(prompt_style_harmony, batched=True)
 
 print("Column names", dataset.column_names)
 print("Text Sample: ", dataset[0]["text"])
 
+
 def render_inference_harmony(question):
-    convo = Conversation.from_messages([
-        Message.from_role_and_content(
-            Role.DEVELOPER,
-            DeveloperContent.new().with_instructions(
-                "You are a medical expert with advanced knowledge in clinical reasoning and diagnostics. "
-                "Respond with ONLY the final diagnosis/cause in ≤5 words."
-            )
-        ),
-        Message.from_role_and_content(Role.USER, question.strip()),
-    ])
+    convo = Conversation.from_messages(
+        [
+            Message.from_role_and_content(
+                Role.DEVELOPER,
+                DeveloperContent.new().with_instructions(
+                    "You are a medical expert with advanced knowledge in clinical reasoning and diagnostics. "
+                    "Respond with ONLY the final diagnosis/cause in ≤5 words."
+                ),
+            ),
+            Message.from_role_and_content(Role.USER, question.strip()),
+        ]
+    )
     tokens = enc.render_conversation_for_completion(convo, Role.ASSISTANT)
     text = enc.decode(tokens)
     return text
+
 
 question = dataset[0]["Open-ended Verifiable Question"]
 
 text = render_inference_harmony(question)
 
-inputs = tokenizer(
-    [text + tokenizer.eos_token], return_tensors="pt"
-).to("cuda")
+inputs = tokenizer([text + tokenizer.eos_token], return_tensors="pt").to("cuda")
 outputs = model.generate(
     input_ids=inputs.input_ids,
     attention_mask=inputs.attention_mask,
-    max_new_tokens=20,
+    max_new_tokens=2048,
     eos_token_id=tokenizer.eos_token_id,
     use_cache=True,
 )
 response = tokenizer.batch_decode(outputs)
 print("Predicted Label: ", response[0])
 print("Ground Truth Label: ", dataset[0]["Ground-True Answer"])
+exit()
 
 peft_config = LoraConfig(
     r=8,

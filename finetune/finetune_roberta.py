@@ -25,19 +25,21 @@ repository_id = "roberta-base-ag_news"
 dataset = load_dataset(dataset_id)
 
 # Training and testing datasets
-train_dataset = dataset['train']
+train_dataset = dataset["train"]
 test_dataset = dataset["test"].shard(num_shards=2, index=0)
 
 # Validation dataset
-val_dataset = dataset['test'].shard(num_shards=2, index=1)
+val_dataset = dataset["test"].shard(num_shards=2, index=1)
 
 # Preprocessing
 tokenizer = RobertaTokenizerFast.from_pretrained(model_id)
 
-# This function tokenizes the input text using the RoBERTa tokenizer. 
+
+# This function tokenizes the input text using the RoBERTa tokenizer.
 # It applies padding and truncation to ensure that all sequences have the same length (256 tokens).
 def tokenize(batch):
     return tokenizer(batch["text"], padding=True, truncation=True, max_length=256)
+
 
 train_dataset = train_dataset.map(tokenize, batched=True, batch_size=len(train_dataset))
 val_dataset = val_dataset.map(tokenize, batched=True, batch_size=len(val_dataset))
@@ -56,7 +58,7 @@ test_dataset.set_format("torch", columns=["input_ids", "attention_mask", "label"
 
 # We will need this to directly output the class names when using the pipeline without mapping the labels later.
 # Extract the number of classes and their names
-num_labels = dataset['train'].features['label'].num_classes
+num_labels = dataset["train"].features["label"].num_classes
 class_names = dataset["train"].features["label"].names
 print(f"number of labels: {num_labels}")
 print(f"the labels: {class_names}")
@@ -76,7 +78,7 @@ training_args = TrainingArguments(
     num_train_epochs=5,
     per_device_train_batch_size=32,
     per_device_eval_batch_size=32,
-    eval_strategy="epoch",         
+    eval_strategy="epoch",
     logging_dir=f"{repository_id}/logs",
     logging_strategy="steps",
     logging_steps=10,
